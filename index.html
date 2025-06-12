@@ -1,0 +1,2985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>54chatweb</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Your CSS styles remain the same */
+        :root {
+            --primary-color: #1a73e8; /* Google Blue */
+            --secondary-color: #34a853; /* Google Green */
+            --error-color: #ea4335; /* Google Red */
+            --warning-color: #fbbc05; /* Google Yellow */
+            --background-color: #e8eaf6; /* Light Blue Grey */
+            --message-bg: #e3f2fd; /* Lighter Blue */
+            --message-bg-other: #ffffff; /* White */
+            --recent-chat-bg: #f5f5f5; /* Off-white */
+            --text-color: #202124; /* Dark Grey */
+            --text-secondary: #5f6368; /* Medium Grey */
+            --border-color: #dadce0; /* Light Grey */
+            --online-color: #4caf50;
+            --offline-color: #9e9e9e;
+            --typing-color: #2196f3;
+            --dark-bg: #1e1e1e;
+            --dark-surface: #2e2e2e;
+            --dark-text: #e0e0e0;
+            --dark-text-secondary: #b0b0b0;
+            --dark-border: #444;
+            --dark-message-bg: #3a4750;
+            --dark-message-bg-other: #4a545d;
+            --dark-recent-chat-bg: #383838;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+            color: var(--text-color);
+        }
+
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            --background-color: var(--dark-bg);
+            --message-bg: var(--dark-message-bg);
+            --message-bg-other: var(--dark-message-bg-other);
+            --recent-chat-bg: var(--dark-recent-chat-bg);
+            --text-color: var(--dark-text);
+            --text-secondary: var(--dark-text-secondary);
+            --border-color: var(--dark-border);
+            --online-color: #66bb6a; /* Lighter green for dark mode */
+            --offline-color: #a0a0a0;
+            --typing-color: #64b5f6; /* Lighter blue for dark mode */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background-color);
+            border-radius: 10px;
+        }
+
+        .dark-mode ::-webkit-scrollbar-track {
+            background: var(--dark-surface);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        .dark-mode ::-webkit-scrollbar-thumb {
+            background: #555;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .dark-mode ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
+        .chat-container {
+            width: 95%;
+            max-width: 1000px;
+            height: 95vh;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* For view transitions */
+            overflow: hidden; /* For view transitions */
+        }
+
+        .dark-mode .chat-container {
+            background-color: var(--dark-surface);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .auth-section {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        /* View Transition Logic */
+        .user-section, .chat-section, .auth-section, .verify-email-section {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transition: transform 0.4s ease-in-out;
+            backface-visibility: hidden; /* Prevents flickering */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-section, .verify-email-section {
+             justify-content: center; /* keep auth section centered */
+             align-items: center;
+        }
+        
+        .chat-section.hidden {
+            transform: translateX(100%);
+            pointer-events: none;
+        }
+
+        .user-section.hidden, .auth-section.hidden, .verify-email-section.hidden {
+            transform: translateX(-100%);
+            pointer-events: none;
+        }
+        
+        /* General hidden class for other elements */
+        .hidden {
+            display: none !important;
+        }
+
+        .auth-section h2, .user-header h2 {
+            margin-bottom: 2.5rem;
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 420px;
+            gap: 1.2rem;
+        }
+
+        .auth-form input {
+            padding: 1rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1.05rem;
+            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+            background-color: transparent;
+            color: var(--text-color);
+        }
+
+        .dark-mode .auth-form input {
+            border-color: var(--dark-border);
+            background-color: var(--dark-surface);
+            color: var(--dark-text);
+        }
+
+        .auth-form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+            background-color: var(--message-bg-other);
+        }
+
+        .dark-mode .auth-form input:focus {
+            background-color: var(--dark-message-bg-other);
+        }
+
+        .auth-form button, .verify-email-section button {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .auth-form button:active {
+            transform: scale(0.98);
+        }
+
+        #login-btn, #resend-verification-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #login-btn:hover, #resend-verification-btn:hover {
+            background-color: #1565c0;
+        }
+
+        #signup-btn, #verification-logout-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        #signup-btn:hover, #verification-logout-btn:hover {
+            background-color: #2e7d32;
+        }
+        
+        .verify-email-section {
+            padding: 2rem;
+            text-align: center;
+        }
+        .verify-email-section .material-icons {
+            font-size: 5rem;
+            color: var(--warning-color);
+            margin-bottom: 1rem;
+        }
+        .verify-email-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .verify-email-section p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 450px;
+            line-height: 1.6;
+        }
+        .verify-email-section .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            color: #757575;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .dark-mode .google-btn {
+            background-color: var(--dark-surface);
+            color: var(--dark-text);
+            border-color: var(--dark-border) !important;
+        }
+
+        .google-btn:hover {
+            background-color: #f8f8f8;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .dark-mode .google-btn:hover {
+            background-color: #383838;
+        }
+
+        .google-btn .material-icons {
+            margin-right: 10px;
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .user-header, .chat-header {
+            padding: 1.2rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+        
+        .user-section {
+             justify-content: flex-start;
+             overflow: hidden; /* Prevent main user-section from scrolling */
+        }
+        
+        .user-header h2, .chat-header h2 {
+            margin-bottom: 0;
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0.6rem;
+            border-radius: 50%;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .header-btn:active {
+            transform: scale(0.95);
+        }
+
+        .user-search {
+            position: relative;
+            padding: 1rem 1.5rem;
+            width: 100%;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--message-bg-other);
+            flex-shrink: 0; /* Prevent search bar from shrinking */
+        }
+
+        .dark-mode .user-search {
+            background-color: var(--dark-surface);
+            border-color: var(--dark-border);
+        }
+
+        .user-search input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 3rem;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .dark-mode .user-search input {
+            border-color: var(--dark-border);
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .user-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+        }
+
+        .user-search .material-icons {
+            position: absolute;
+            left: 2.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+        }
+
+        /* user-list is for search results, recent-chats for recent */
+        .user-list, .recent-chats {
+            flex: 1; /* Allow these to take remaining space and scroll */
+            width: 100%;
+            overflow-y: auto;
+            padding: 0.5rem 1.5rem 1.5rem;
+        }
+
+        .user-item, .recent-chat-item {
+            padding: 1rem 0.8rem;
+            margin-bottom: 0.4rem;
+            background-color: var(--recent-chat-bg);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .dark-mode .user-item, .dark-mode .recent-chat-item {
+            background-color: var(--dark-recent-chat-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .user-item:hover, .recent-chat-item:hover {
+            background-color: rgba(0, 0, 0, 0.03); /* Lighter for light mode */
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+        .dark-mode .user-item:hover, .dark-mode .recent-chat-item:hover {
+            background-color: rgba(255, 255, 255, 0.05); /* Lighter for dark mode */
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+
+
+        .user-item:active, .recent-chat-item:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .user-avatar, .recent-chat-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            background-color: #cfd8dc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .dark-mode .user-avatar, .dark-mode .recent-chat-avatar {
+            background-color: #546e7a;
+        }
+
+        .user-avatar img, .recent-chat-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .user-avatar .material-icons, .recent-chat-avatar .material-icons {
+            font-size: 2.2rem;
+            color: #888;
+        }
+        .dark-mode .user-avatar .material-icons, .dark-mode .recent-chat-avatar .material-icons {
+            color: #ccc;
+        }
+
+        .user-status, .recent-chat-status {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 2px solid white;
+            transition: background-color 0.3s ease;
+        }
+
+        .dark-mode .user-status, .dark-mode .recent-chat-status {
+            border-color: var(--dark-recent-chat-bg); /* Adjust if needed for dark mode recent chat items */
+        }
+         body.dark-mode .user-item .user-status, body.dark-mode .recent-chat-item .recent-chat-status {
+            border-color: var(--dark-recent-chat-bg);
+        }
+        body:not(.dark-mode) .user-item .user-status, body:not(.dark-mode) .recent-chat-item .recent-chat-status {
+            border-color: var(--recent-chat-bg); /* Or white if preferred */
+        }
+
+
+        .user-status.online, .recent-chat-status.online {
+            background-color: var(--online-color);
+        }
+
+        .user-status.offline, .recent-chat-status.offline {
+            background-color: var(--offline-color);
+        }
+
+        .user-status.typing, .recent-chat-status.typing {
+            background-color: var(--typing-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+
+        .user-info, .recent-chat-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name, .recent-chat-name {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-last-message, .recent-chat-last-message {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: calc(100% - 20px); /* Adjust for unread count */
+        }
+
+        .unread-count, .recent-chat-unread {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        /* No results message styling (used by JS) */
+        #no-search-results-message, #no-recent-chats-message, #no-friend-requests-message {
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 1rem;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            background-color: var(--background-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 0.9rem 1.2rem;
+            border-radius: 20px;
+            word-wrap: break-word;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background-color: var(--message-bg);
+            border-bottom-right-radius: 6px;
+            color: var(--text-color);
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background-color: var(--message-bg-other);
+            border-bottom-left-radius: 6px;
+            color: var(--text-color);
+        }
+
+        .dark-mode .message.sent {
+            background-color: var(--dark-message-bg);
+            color: var(--dark-text);
+        }
+
+        .dark-mode .message.received {
+            background-color: var(--dark-message-bg-other);
+            color: var(--dark-text);
+        }
+
+        .message-info {
+            font-size: 0.75rem;
+            margin-top: 0.4rem;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            justify-content: flex-end;
+            color: var(--text-secondary);
+        }
+
+        .dark-mode .message-info {
+            color: var(--dark-text-secondary);
+        }
+
+        .message-actions {
+            position: absolute;
+            top: -12px; /* Adjust based on message padding and desired look */
+            right: 10px;
+            background: var(--background-color); /* Match message container background */
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none; /* Hidden by default */
+            z-index: 10;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            animation: slideInTop 0.2s ease-out;
+        }
+        .dark-mode .message.sent .message-actions, .dark-mode .message.received .message-actions {
+             background: var(--dark-surface); /* Dark mode actions background */
+             border-color: var(--dark-border);
+        }
+
+
+        @keyframes slideInTop {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+
+        .message:hover .message-actions { /* Unified hover for all messages */
+            display: flex;
+        }
+
+
+        .message-action {
+            padding: 6px 10px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            transition: color 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message-action:hover {
+            color: var(--primary-color);
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-mode .message-action:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .message-editing {
+            background-color: var(--warning-color) !important;
+            box-shadow: 0 2px 8px rgba(251, 188, 5, 0.3) !important;
+            border: 1px solid #e0b000;
+            color: #444 !important;
+        }
+        .dark-mode .message-editing {
+            background-color: #c98e00 !important; /* Darker yellow for dark mode */
+            border: 1px solid #a07200;
+            color: var(--dark-text) !important;
+        }
+
+
+        .message-sender {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+        }
+
+        .message-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .message-reply {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 0.8rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+            opacity: 0.85;
+            background-color: rgba(0, 0, 0, 0.03);
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        .dark-mode .message-reply {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .message-reply-sender {
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+        }
+
+        .message-reply-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .message-reactions {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.6rem;
+            flex-wrap: wrap;
+            padding-top: 0.2rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: -0.2rem; /* Pull up a bit */
+            padding-bottom: 0.2rem;
+        }
+         .dark-mode .message-reactions {
+            border-top-color: rgba(255,255,255,0.08);
+        }
+
+        .message-reaction {
+            background-color: rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .dark-mode .message-reaction {
+            background-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .message-reaction:hover {
+            background-color: rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .dark-mode .message-reaction:hover {
+            background-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .message-reaction.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(26, 115, 232, 0.3);
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--typing-color);
+            margin-left: 1rem;
+            margin-bottom: 0.5rem; /* Spacing from messages below */
+            font-style: italic;
+            align-self: flex-start; /* Ensure it aligns with received messages if needed */
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            background-color: var(--typing-color);
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+            transform-origin: bottom;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        .message-input-container {
+            display: flex;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--message-bg-other);
+            align-items: flex-end; /* Align items to bottom */
+            gap: 0.8rem;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+             flex-shrink: 0; /* Prevent input container from shrinking */
+        }
+
+        .dark-mode .message-input-container {
+            background-color: var(--dark-surface);
+            border-color: var(--dark-border);
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .emoji-btn, .attachment-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.6rem;
+            border-radius: 50%;
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            align-self: flex-end; /* Align button to bottom with multi-line input */
+            margin-bottom: 8px; /* Adjust to align with input field's bottom padding */
+        }
+         .send-btn { /* Also needs alignment for multi-line */
+            align-self: flex-end;
+            margin-bottom: 0; /* Assuming input has some padding */
+            
+        }
+
+
+        .emoji-btn:hover, .attachment-btn:hover {
+            background-color: rgba(0, 0, 0, 0.07);
+            color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        .dark-mode .emoji-btn:hover, .dark-mode .attachment-btn:hover {
+            background-color: rgba(255, 255, 255, 0.07);
+            color: var(--primary-color); /* Ensure primary color stands out */
+        }
+
+        .message-input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .reply-preview {
+            background-color: var(--recent-chat-bg);
+            padding: 0.6rem 0.8rem;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .dark-mode .reply-preview {
+            background-color: var(--dark-recent-chat-bg); /* Consistent with dark mode chat items */
+        }
+
+        .cancel-reply {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.2rem;
+            font-size: 1.2rem;
+            transition: color 0.2s ease;
+        }
+
+        .cancel-reply:hover {
+            color: var(--error-color);
+        }
+
+        .message-input { /* This div wraps the input and send/attach buttons */
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-end; /* Align items to bottom */
+        }
+
+
+        .message-input input[type="text"] { /* More specific selector for the text input */
+            flex: 1;
+            padding: 0.9rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+            min-height: 42px; /* Ensure it doesn't get too small */
+            resize: none; /* If it were a textarea */
+            line-height: 1.4; /* For potential multi-line appearance */
+        }
+
+
+        .dark-mode .message-input input[type="text"] {
+            border-color: var(--dark-border);
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .message-input input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+            background-color: var(--message-bg-other);
+        }
+
+        .dark-mode .message-input input[type="text"]:focus {
+            background-color: var(--dark-message-bg-other);
+        }
+
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            font-size: 1.6rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .send-btn:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+         .dark-mode .send-btn:disabled {
+            background-color: var(--dark-border);
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background-color: #1565c0; /* Darker primary for hover */
+            transform: scale(1.05);
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .recent-chats-header {
+            padding: 1rem 1.5rem 0.5rem; /* Standardized padding */
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            border-top: 1px solid var(--border-color);
+            margin-top: 0.5rem; /* Spacing if multiple headers were used */
+            flex-shrink: 0; /* Prevent header from shrinking */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dark-mode .recent-chats-header {
+            border-color: var(--dark-border);
+        }
+        /* First recent chats header might not need a top border or margin */
+        .recent-chats > .recent-chats-header:first-child, #friend-requests-container > .recent-chats-header {
+            margin-top: 0;
+            border-top: none;
+            padding-top: 0.5rem; /* Adjust if no border */
+        }
+
+
+        .recent-chat-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-left: 0.8rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .file-preview {
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 0.8rem;
+            background-color: rgba(0, 0, 0, 0.05); /* Light background for the preview box */
+            border-radius: 10px;
+            max-width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .dark-mode .file-preview {
+            background-color: rgba(255, 255, 255, 0.1); /* Slightly lighter for dark mode */
+        }
+
+        .file-preview-icon {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .file-preview-info {
+            flex: 1;
+            min-width: 0; /* Prevents text overflow issues */
+        }
+
+        .file-preview-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-color);
+        }
+
+        .file-preview-size {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .file-preview-cancel {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.2rem;
+            font-size: 1.2rem;
+            transition: color 0.2s ease;
+        }
+        .file-preview-cancel:hover {
+            color: var(--error-color);
+        }
+
+        /* Download icon in message */
+        .message .file-preview-download {
+            margin-left: 0.5rem;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, color 0.2s ease;
+            text-decoration: none; /* Remove underline from anchor */
+        }
+        .message .file-preview-download:hover {
+            transform: translateY(-2px);
+            color: #1565c0; /* Darker shade on hover */
+        }
+         .dark-mode .message .file-preview-download:hover {
+            color: #64b5f6; /* Lighter blue for dark mode hover */
+        }
+
+        .image-preview { /* Used in sent/received messages */
+            max-width: 250px;
+            max-height: 250px;
+            border-radius: 8px;
+            margin-top: 0.6rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            object-fit: contain; /* Ensures entire image is visible */
+            display: block; /* Ensures it takes full width of its container if small */
+             border: 1px solid var(--border-color); /* Subtle border for images */
+        }
+         .dark-mode .image-preview {
+            border-color: var(--dark-border);
+        }
+
+        .image-preview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+         .dark-mode .image-preview:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8); /* Darker overlay for better focus */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeInOverlay 0.3s ease;
+            padding: 1rem; /* Add some padding for smaller screens */
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content { /* General modal content for image and password reset */
+            background-color: var(--message-bg-other); /* White for light mode */
+            border-radius: 12px;
+            max-width: 90%;
+            max-height: 90vh; /* Use vh for height */
+            overflow: auto; /* Allow scrolling if content exceeds modal size */
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            animation: slideInModal 0.3s ease-out;
+            display: flex; /* For image modal content */
+            flex-direction: column; /* For image modal content */
+        }
+        /* Specific for image modal to ensure image fits */
+        #image-modal .modal-content {
+            overflow: hidden; /* Image modal specific */
+        }
+
+
+        @keyframes slideInModal {
+            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .dark-mode .modal-content {
+            background-color: var(--dark-surface);
+        }
+
+        .modal-close { /* General close button for modals */
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none; /* Or a subtle background */
+            border: none;
+            color: var(--text-secondary); /* Grey for light mode */
+            font-size: 1.8rem;
+            cursor: pointer;
+            z-index: 1010; /* Above modal content */
+            transition: transform 0.2s ease, color 0.2s ease;
+            padding: 0.3rem;
+            border-radius: 50%;
+            line-height: 1;
+        }
+        .dark-mode .modal-close {
+            color: var(--dark-text-secondary); /* Lighter grey for dark mode */
+        }
+        #image-modal .modal-close { /* Specific for image modal if needed for contrast */
+             color: white;
+             text-shadow: 0 0 5px rgba(0,0,0,0.7);
+        }
+        #image-modal .modal-close:hover {
+            transform: rotate(90deg) scale(1.1);
+            color: #f0f0f0;
+        }
+        /* General modal close hover */
+        .modal-close:hover {
+            transform: rotate(90deg) scale(1.1);
+            color: var(--error-color); /* Red on hover for emphasis */
+        }
+
+
+        .modal-image { /* Image inside the image modal */
+            max-width: 100%;
+            max-height: calc(90vh - 4rem); /* Account for modal padding/close button */
+            display: block;
+            margin: auto; /* Center image */
+            object-fit: contain;
+        }
+
+
+        .reaction-picker {
+            position: fixed; /* Changed to fixed for reliable positioning */
+            background-color: white;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            padding: 0.6rem 0.8rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 1001; /* Above messages, below modals */
+            animation: scaleIn 0.2s ease-out;
+            transform-origin: center bottom; /* Animation origin */
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.8) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+
+        .dark-mode .reaction-picker {
+            background-color: var(--dark-surface);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .reaction-emoji {
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 50%;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reaction-emoji:hover {
+            transform: scale(1.25);
+            background-color: rgba(0,0,0,0.05);
+        }
+        .dark-mode .reaction-emoji:hover {
+            background-color: rgba(255,255,255,0.08);
+        }
+
+        .theme-toggle {
+            color: white; /* Always white on header */
+        }
+
+
+        /* Forgot password link */
+        .forgot-password {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .forgot-password a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: text-decoration 0.2s ease, color 0.2s ease;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+            color: #1565c0; /* Darker primary on hover */
+        }
+        .dark-mode .forgot-password a:hover {
+            color: #64b5f6; /* Lighter blue for dark mode */
+        }
+
+
+        /* Reset password modal (reusing .modal-overlay and .modal-content structure) */
+        .modal { /* This is the overlay for reset password modal */
+            position: fixed;
+            z-index: 1000; /* Ensure it's below reaction picker if active, but above page */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7); /* Slightly more opaque */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeInOverlay 0.3s ease;
+        }
+
+        /* modal-content is already defined, password reset modal uses it */
+        #reset-password-modal .modal-content, #profile-modal .modal-content {
+            padding: 2.2rem;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            overflow-y: auto; /* For smaller screens if content is too tall */
+        }
+
+
+        #reset-password-modal .close-modal, #profile-modal .close-modal { /* Specific if needed, or use .modal-close */
+             /* Uses general .modal-close styling */
+        }
+
+        #reset-password-modal h2, #profile-modal h2 {
+            margin-bottom: 1.2rem;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        #reset-password-modal p, #profile-modal p {
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        #reset-password-modal input[type="email"], #profile-modal input[type="text"] {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .dark-mode #reset-password-modal input[type="email"], .dark-mode #profile-modal input[type="text"] {
+            border-color: var(--dark-border);
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+        #reset-password-modal input[type="email"]:focus, #profile-modal input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+        }
+
+
+        #reset-password-modal button, #profile-modal button {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        #reset-password-modal button:hover, #profile-modal button:hover {
+            background-color: #1565c0;
+        }
+        #reset-password-modal button:active, #profile-modal button:active {
+            transform: scale(0.98);
+        }
+
+        /* Profile Modal Specifics */
+        .profile-avatar-label {
+            display: inline-block;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+        
+        #profile-modal .profile-avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto;
+            background-color: #cfd8dc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 4px solid var(--message-bg-other);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+            cursor: pointer;
+        }
+        .dark-mode #profile-modal .profile-avatar-preview {
+            background-color: #546e7a;
+            border-color: var(--dark-surface);
+        }
+        #profile-modal .profile-avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #profile-modal .avatar-edit-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 0;
+            background-color: rgba(0,0,0,0.4);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        #profile-modal .profile-avatar-preview:hover .avatar-edit-overlay {
+            opacity: 1;
+        }
+
+        .avatar-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: var(--background-color);
+        }
+        .dark-mode .avatar-selection-grid {
+            background: var(--dark-bg);
+        }
+        .avatar-selection-grid .selectable-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 3px solid transparent;
+            overflow: hidden;
+        }
+        .avatar-selection-grid .selectable-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-selection-grid .selectable-avatar:hover {
+            transform: scale(1.1);
+        }
+        .avatar-selection-grid .selectable-avatar.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+
+
+        /* General message styling for success/error in modals or forms */
+        .form-message { /* Renamed for clarity from just .message */
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .form-message.success {
+            color: #1b5e20; /* Dark green text */
+            background-color: #e8f5e9; /* Light green background */
+            border: 1px solid #a5d6a9; /* Softer green border */
+        }
+
+        .dark-mode .form-message.success {
+            background-color: #1e4620; /* Darker green background for dark mode */
+            color: #a5d6a7; /* Lighter green text */
+            border-color: #4caf50; /* Brighter green border */
+        }
+
+        .form-message.error {
+            color: #b71c1c; /* Dark red text */
+            background-color: #ffebee; /* Light red background */
+            border: 1px solid #ef9a9a; /* Softer red border */
+        }
+
+        .dark-mode .form-message.error {
+            background-color: #6a1b1c; /* Darker red background for dark mode */
+            color: #ef9a9a; /* Lighter red text */
+            border-color: #ef5350; /* Brighter red border */
+        }
+
+        .emoji-picker { /* This is the <emoji-picker> web component */
+            position: absolute !important; /* Needs !important to override its internal styles if necessary */
+            bottom: 75px; /* Adjust to be above message input container */
+            right: 20px; /* Or left, depending on layout */
+            z-index: 1001; /* Above messages, below modals */
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            border-radius: 12px;
+            overflow: hidden; /* If it has its own border/bg */
+            border: 1px solid var(--border-color);
+            animation: fadeInScaleUp 0.2s ease-out;
+            transform-origin: bottom right; /* Animation origin */
+        }
+
+
+        @keyframes fadeInScaleUp {
+            from { opacity: 0; transform: scale(0.9) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .dark-mode .emoji-picker {
+            border-color: var(--dark-border);
+            /* The component itself should respect 'theme="dark"' attribute for internal styling */
+        }
+
+
+        .read-receipt { /* This class was used in JS but not defined, assuming it's for the icon */
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+            color: var(--primary-color); /* Read blue */
+            transition: color 0.2s ease;
+        }
+        /* Styling for read receipt icons */
+        .message.sent .message-info .material-icons.receipt-icon {
+            font-size: 1rem; /* Adjust icon size for receipt */
+            margin-left: 0.3rem;
+            vertical-align: middle;
+            color: var(--text-secondary); /* Default sent color (grey) */
+        }
+        .message.sent .message-info .material-icons.receipt-icon.read {
+            color: var(--primary-color); /* Google Blue for read */
+        }
+        .message.sent .message-info .material-icons.receipt-icon.delivered {
+            color: var(--text-secondary); /* Or a slightly different grey if you distinguish delivered */
+        }
+        
+        /* Toast Notification System */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 25px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success { background-color: var(--secondary-color); }
+        .toast.error { background-color: var(--error-color); }
+        .toast.info { background-color: var(--primary-color); }
+        
+        /* Button Spinner */
+        .btn-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        #send-btn .btn-spinner {
+            width: 24px;
+            height: 24px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- Friend Request & Hamburger Menu Styles --- */
+        #friend-requests-badge {
+            background-color: var(--error-color);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: scale(0.8);
+        }
+
+        .user-item-actions {
+            margin-left: auto;
+            padding-left: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .action-btn.add { background-color: var(--primary-color); color: white; }
+        .action-btn.add:hover { background-color: #1565c0; }
+        .action-btn.accept { background-color: var(--secondary-color); color: white; }
+        .action-btn.accept:hover { background-color: #2e7d32; }
+        .action-btn.decline { background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .action-btn.decline:hover { background-color: var(--recent-chat-bg); color: var(--error-color); }
+        .dark-mode .action-btn.decline:hover { background-color: var(--dark-recent-chat-bg); }
+        .action-btn.sent { background-color: transparent; color: var(--text-secondary); cursor: not-allowed; font-style: italic; }
+
+        .friend-request-item {
+            padding: 1rem 0.8rem; margin-bottom: 0.4rem; background-color: var(--recent-chat-bg);
+            border-radius: 10px; display: flex; align-items: center; position: relative;
+        }
+        .dark-mode .friend-request-item { background-color: var(--dark-recent-chat-bg); }
+        
+        .close-panel-btn {
+            background: none; border: none; font-size: 1.5rem;
+            color: var(--text-secondary); cursor: pointer; line-height: 1;
+            padding: 0.2rem 0.5rem; border-radius: 50%;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .close-panel-btn:hover { background-color: rgba(0,0,0,0.1); color: var(--error-color); }
+        .dark-mode .close-panel-btn:hover { background-color: rgba(255,255,255,0.1); }
+        
+        #dropdown-menu {
+            position: absolute;
+            top: 60px;
+            right: 1.5rem;
+            background-color: var(--message-bg-other);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid var(--border-color);
+            z-index: 20;
+            overflow: hidden;
+            width: 220px;
+            animation: fadeInScaleUp 0.2s ease-out;
+            transform-origin: top right;
+        }
+        .dark-mode #dropdown-menu {
+             background-color: var(--dark-surface);
+             border-color: var(--dark-border);
+             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: background-color 0.2s;
+            font-size: 1rem;
+        }
+        .dropdown-item:not(:last-child) {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .dark-mode .dropdown-item:not(:last-child) {
+            border-bottom-color: var(--dark-border);
+        }
+        .dropdown-item:hover {
+            background-color: var(--recent-chat-bg);
+        }
+        .dark-mode .dropdown-item:hover {
+            background-color: var(--dark-recent-chat-bg);
+        }
+        .dropdown-item .material-icons {
+            color: var(--text-secondary);
+        }
+        .dropdown-item .item-text {
+            flex-grow: 1;
+        }
+
+        @media (max-width: 768px) {
+            #dropdown-menu { right: 1rem; }
+            .chat-container { width: 100%; height: 100vh; border-radius: 0; box-shadow: none; }
+            .auth-section {  padding: 1.5rem; }
+            .user-section { padding: 0; }
+            .auth-section h2, .user-header h2 { margin-bottom: 2rem; font-size: 2rem; }
+            .user-search, .message-input-container { padding: 0.8rem 1rem; }
+            .user-search .material-icons { left: 1.8rem; }
+            .user-list, .recent-chats { padding: 0.5rem 1rem 1rem; }
+            .user-item, .recent-chat-item { padding: 0.8rem 0.6rem; }
+            .messages { padding: 0.8rem 1rem; }
+            .message { max-width: 90%; padding: 0.7rem 1rem; }
+            .send-btn { width: 48px; height: 48px; font-size: 1.4rem; }
+            .message-input input[type="text"] { padding: 0.8rem 1.1rem; min-height: 40px; }
+            .emoji-btn, .attachment-btn { padding: 0.5rem; margin-bottom: 6px; }
+            .emoji-picker { bottom: 65px; right: 10px; left: 10px; width: auto; max-width: calc(100vw - 20px); }
+            .reaction-picker { max-width: calc(100vw - 20px); }
+            .modal-content { max-width: 95%; max-height: 95vh; }
+            #reset-password-modal .modal-content, #profile-modal .modal-content { padding: 1.5rem; }
+        }
+
+        @media (max-width: 480px) {
+            #dropdown-menu { width: 180px; }
+            .auth-section h2, .user-header h2 { font-size: 1.8rem; }
+            .auth-form input, .auth-form button { padding: 0.9rem; font-size: 1rem; }
+            .google-btn .material-icons { margin-right: 6px; font-size: 1.2rem; }
+            .header-btn { padding: 0.4rem; font-size: 1.2rem; }
+            .user-avatar, .recent-chat-avatar { width: 40px; height: 40px; margin-right: 0.8rem; }
+            .user-avatar .material-icons, .recent-chat-avatar .material-icons { font-size: 2rem; }
+            .user-name, .recent-chat-name { font-size: 1rem; }
+            .user-email, .user-last-message, .recent-chat-last-message { font-size: 0.8rem; }
+            .unread-count, .recent-chat-unread { min-width: 20px; height: 20px; font-size: 0.7rem; }
+            .message-input input[type="text"] { padding: 0.7rem 1rem; font-size: 0.95rem; min-height: 38px; }
+            .emoji-btn, .attachment-btn { padding: 0.4rem; font-size: 1.2rem; margin-bottom: 5px; }
+            .send-btn { width: 40px; height: 40px; font-size: 1.3rem; }
+            .emoji-picker { bottom: 60px; }
+            #reset-password-modal h2, #profile-modal h2 { font-size: 1.6rem; }
+            #reset-password-modal input, #reset-password-modal button, #profile-modal input, #profile-modal button { padding: 0.9rem; font-size: 1rem; }
+            .action-btn { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="auth-section" class="auth-section">
+            <h2>54chatweb</h2>
+            <div class="auth-form">
+                <label for="email" class="hidden">Email</label>
+                <input type="email" id="email" placeholder="Email" autocomplete="email">
+                <label for="password" class="hidden">Password</label>
+                <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+                <button id="login-btn">Login</button>
+                <button id="signup-btn">Sign Up</button>
+                <button id="google-login" class="google-btn">
+                    <span class="material-icons">account_circle</span> Sign in with Google
+                </button>
+                <div class="forgot-password">
+                    <a href="#" id="forgot-password-link">Forgot password?</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="verify-email-section" class="verify-email-section hidden">
+            <span class="material-icons">mark_email_unread</span>
+            <h2>Verify Your Email</h2>
+            <p>A verification link has been sent to your email address. Please check your inbox (and spam folder) to continue. You may need to refresh this page after verifying.</p>
+            <div class="actions">
+                <button id="resend-verification-btn">Resend Verification Email</button>
+                <button id="verification-logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <div id="reset-password-modal" class="modal hidden">
+            <div class="modal-content">
+                <button class="modal-close close-modal" title="Close">&times;</button>
+                <h2>Reset Password</h2>
+                <p>Enter your email address and we'll send you a link to reset your password.</p>
+                <input type="email" id="reset-email" placeholder="Your email address">
+                <button id="send-reset-link">Send Reset Link</button>
+                <p id="reset-message" class="form-message"></p>
+            </div>
+        </div>
+        
+        <div id="profile-modal" class="modal hidden">
+            <div class="modal-content">
+                <button class="modal-close close-modal" title="Close">&times;</button>
+                <h2>Your Profile</h2>
+                <label for="avatar-upload-input" class="profile-avatar-label" title="Change profile picture">
+                    <div id="profile-avatar-preview" class="profile-avatar-preview">
+                        <img src="" alt="Your Avatar">
+                        <div class="avatar-edit-overlay">
+                            <span class="material-icons">edit</span>
+                        </div>
+                    </div>
+                </label>
+                <input type="file" id="avatar-upload-input" accept="image/*" style="display: none;">
+
+                <input type="text" id="profile-display-name" placeholder="Your display name">
+                <p id="profile-email" style="margin-top: -1rem; margin-bottom: 1rem;"></p>
+                
+                <p style="font-weight: 500; color: var(--text-color); margin-bottom: 0.5rem;">Or choose a predefined avatar</p>
+                <div id="avatar-selection-grid" class="avatar-selection-grid">
+                </div>
+                <button id="save-profile-btn">Save Changes</button>
+            </div>
+        </div>
+
+        <div id="user-section" class="user-section hidden">
+            <div class="user-header">
+                <h2>Chats</h2>
+                <div class="header-actions">
+                    <button id="hamburger-btn" class="header-btn" title="Menu">
+                        <span class="material-icons">menu</span>
+                    </button>
+                </div>
+            </div>
+             <div id="dropdown-menu" class="hidden">
+                <div class="dropdown-item" id="menu-profile-btn">
+                    <span class="material-icons">person</span>
+                    <span class="item-text">Profile</span>
+                </div>
+                <div class="dropdown-item" id="menu-fr-btn">
+                    <span class="material-icons">group_add</span>
+                    <span class="item-text">Friend Requests</span>
+                    <div id="friend-requests-badge" class="hidden"></div>
+                </div>
+                <div class="dropdown-item" id="menu-install-btn" style="display: none;">
+                    <span class="material-icons">install_mobile</span>
+                    <span class="item-text">Install App</span>
+                </div>
+                <div class="dropdown-item" id="menu-theme-btn">
+                    <span class="material-icons">brightness_4</span>
+                    <span class="item-text">Toggle Theme</span>
+                </div>
+                <div class="dropdown-item" id="menu-signout-btn">
+                    <span class="material-icons">logout</span>
+                    <span class="item-text">Sign Out</span>
+                </div>
+            </div>
+            <div class="user-search">
+                <input type="text" id="user-search-input" placeholder="Search users to add friends...">
+                <span class="material-icons">search</span>
+            </div>
+            <div id="friend-requests-container" class="hidden">
+                <h3 class="recent-chats-header">
+                    <span>Friend Requests</span>
+                    <button id="close-fr-panel-btn" class="close-panel-btn" title="Back to chats">&times;</button>
+                </h3>
+                <div id="friend-requests-list" class="user-list" style="display: block; padding: 0.5rem 1.5rem 1.5rem;">
+                    </div>
+            </div>
+            <div id="user-list" class="user-list" style="display: none;">
+            </div>
+            <div class="recent-chats" id="recent-chats">
+                <h3 class="recent-chats-header">Recent Chats</h3>
+            </div>
+        </div>
+
+        <div id="chat-section" class="chat-section hidden">
+            <div class="chat-header">
+                <button id="back-to-users" class="header-btn back-btn" title="Back to chats">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h2 id="chat-with-user">Chat with User</h2>
+                <div class="header-actions">
+                    <button id="chat-theme-toggle" class="header-btn theme-toggle" title="Toggle theme">
+                        <span class="material-icons">brightness_4</span>
+                    </button>
+                    <button id="chat-signout-btn" class="header-btn signout-btn" title="Sign out">
+                        <span class="material-icons">logout</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="messages" class="messages">
+                <div id="typing-indicator-container" style="align-self: flex-start;"></div>
+            </div>
+            
+            <div class="message-input-container">
+                <button id="emoji-btn" class="emoji-btn" title="Emoji">
+                    <span class="material-icons">mood</span>
+                </button>
+                <div class="message-input-wrapper">
+                    <div id="reply-preview" class="reply-preview hidden">
+                        <span id="reply-preview-text">Replying to message</span>
+                        <button id="cancel-reply" class="cancel-reply" title="Cancel reply">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                    <div id="file-preview" class="file-preview hidden">
+                        <span class="material-icons file-preview-icon">insert_drive_file</span>
+                        <div class="file-preview-info">
+                            <div class="file-preview-name">filename.txt</div>
+                            <div class="file-preview-size">123 KB</div>
+                        </div>
+                        <button id="cancel-file" class="file-preview-cancel" title="Cancel file">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                    <div class="message-input">
+                        <input type="text" id="message-input" placeholder="Type your message...">
+                        <label for="file-upload" class="attachment-btn" title="Attach file">
+                            <span class="material-icons">attach_file</span>
+                        </label>
+                        <input type="file" id="file-upload" style="display: none;">
+                        <button id="send-btn" class="send-btn" disabled title="Send message">
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="image-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <button id="close-image-modal" class="modal-close" title="Close image">
+                    <span class="material-icons">close</span>
+                </button>
+                <img id="modal-image" class="modal-image" src="" alt="Preview">
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-container"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script> 
+    
+    <script>
+        // Initialize Firebase with your config
+       const firebaseConfig = {
+         apiKey: "AIzaSyCRep6hAOKzY9QEPEGeh-jZfmUZHzcKM7c",
+         authDomain: "vchat-f4f57.firebaseapp.com",
+         projectId: "vchat-f4f57",
+         storageBucket: "vchat-f4f57.appspot.com",
+         messagingSenderId: "843011182805",
+         appId: "1:843011182805:web:22fabdfc74660142bb525c",
+         measurementId: "G-3N3857MEYJ"
+       };
+       
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const authSection = document.getElementById('auth-section');
+        const verifyEmailSection = document.getElementById('verify-email-section');
+        const userSection = document.getElementById('user-section');
+        const chatSection = document.getElementById('chat-section');
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const googleLoginBtn = document.getElementById('google-login');
+        const chatSignoutBtn = document.getElementById('chat-signout-btn');
+        const backToUsersBtn = document.getElementById('back-to-users');
+        const userList = document.getElementById('user-list');
+        const recentChatsContainer = document.getElementById('recent-chats'); 
+        const chatWithUserElement = document.getElementById('chat-with-user');
+        const userSearchInput = document.getElementById('user-search-input');
+        const emojiBtn = document.getElementById('emoji-btn');
+        const fileUpload = document.getElementById('file-upload');
+        const filePreview = document.getElementById('file-preview');
+        const fileName = document.querySelector('.file-preview-name');
+        const fileSize = document.querySelector('.file-preview-size');
+        const cancelFile = document.getElementById('cancel-file');
+        const replyPreview = document.getElementById('reply-preview');
+        const replyPreviewText = document.getElementById('reply-preview-text');
+        const cancelReply = document.getElementById('cancel-reply');
+        const typingIndicatorContainer = document.getElementById('typing-indicator-container');
+        const chatThemeToggle = document.getElementById('chat-theme-toggle');
+        const imageModal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        const closeImageModal = document.getElementById('close-image-modal');
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+        const resetPasswordModal = document.getElementById('reset-password-modal');
+        const closeModalButtons = document.querySelectorAll('.close-modal');
+        const sendResetLink = document.getElementById('send-reset-link');
+        const resetEmail = document.getElementById('reset-email');
+        const resetMessage = document.getElementById('reset-message');
+        const resendVerificationBtn = document.getElementById('resend-verification-btn');
+        const verificationLogoutBtn = document.getElementById('verification-logout-btn');
+        const profileModal = document.getElementById('profile-modal');
+        const profileAvatarPreview = document.getElementById('profile-avatar-preview').querySelector('img');
+        const avatarUploadInput = document.getElementById('avatar-upload-input');
+        const profileDisplayNameInput = document.getElementById('profile-display-name');
+        const profileEmailElement = document.getElementById('profile-email');
+        const avatarSelectionGrid = document.getElementById('avatar-selection-grid');
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        
+        // --- Hamburger Menu & Friend Request System Elements ---
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const menuProfileBtn = document.getElementById('menu-profile-btn');
+        const menuFrBtn = document.getElementById('menu-fr-btn');
+        const menuThemeBtn = document.getElementById('menu-theme-btn');
+        const menuSignoutBtn = document.getElementById('menu-signout-btn');
+        const friendRequestsBadge = document.getElementById('friend-requests-badge');
+        const friendRequestsContainer = document.getElementById('friend-requests-container');
+        const friendRequestsList = document.getElementById('friend-requests-list');
+        const closeFrPanelBtn = document.getElementById('close-fr-panel-btn');
+
+        // --- PWA Install Elements ---
+        const menuInstallBtn = document.getElementById('menu-install-btn');
+        let deferredPrompt;
+
+        // Initialize emoji picker
+        const picker = document.createElement('emoji-picker');
+        picker.classList.add('emoji-picker', 'hidden'); 
+        document.body.appendChild(picker); 
+
+        // Global variables
+        let currentUser = null;
+        let selectedUserId = null;
+        let selectedUserName = null;
+        let selectedUserAvatar = null;
+        let unsubscribeMessages = null;
+        let unsubscribeRecentChats = null;
+        let unsubscribeUserStatus = null;
+        let unsubscribeTypingIndicator = null;
+        let currentlyEditingMessageId = null;
+        let replyingToMessageId = null;
+        let selectedFile = null;
+        let isTyping = false;
+        let typingTimeout = null;
+        let onlineStatusTimeout = null;
+        let allUsersCache = []; 
+        let tempSelectedAvatarUrl = null;
+        let newUserAvatarFile = null;
+
+        // --- Friend Request System Variables ---
+        let friends = new Set();
+        let outgoingRequests = new Set();
+        let incomingRequests = new Map();
+        let unsubscribeFriendsListener = null;
+        let unsubscribeRequestsListener = null;
+
+        const predefinedAvatars = [
+            'https://avatarfiles.alphacoders.com/373/thumb-350-373451.webp', 'https://avatarfiles.alphacoders.com/364/thumb-350-364764.webp',
+            'https://avatarfiles.alphacoders.com/374/thumb-350-374884.webp', 'https://avatarfiles.alphacoders.com/364/thumb-350-364731.webp',
+            'https://avatarfiles.alphacoders.com/375/thumb-350-375571.webp', 'https://avatarfiles.alphacoders.com/364/thumb-350-364419.webp'
+        ];
+
+        // --- PWA Service Worker and Install Prompt Logic ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('Service Worker registered: ', registration))
+                    .catch(registrationError => console.log('Service Worker registration failed: ', registrationError));
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Show the install button
+            menuInstallBtn.style.display = 'flex';
+        });
+
+        menuInstallBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('App installed successfully!', 'success');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                // We've used the prompt, and can't use it again, clear it
+                deferredPrompt = null;
+                // Hide the install button
+                menuInstallBtn.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+          // Hide the install button
+          menuInstallBtn.style.display = 'none';
+          deferredPrompt = null;
+          console.log('PWA was installed');
+        });
+
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10); 
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        const themeIcon = document.querySelectorAll('.theme-toggle .material-icons, #menu-theme-btn .material-icons');
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                picker.setAttribute('theme', 'dark');
+                themeIcon.forEach(icon => icon.textContent = 'light_mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+                picker.removeAttribute('theme');
+                themeIcon.forEach(icon => icon.textContent = 'brightness_4');
+            }
+        }
+
+        if (savedTheme) applyTheme(savedTheme);
+        else applyTheme('light');
+
+        function toggleTheme() {
+            const currentTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+            applyTheme(currentTheme);
+            localStorage.setItem('theme', currentTheme);
+        }
+        
+        menuThemeBtn.addEventListener('click', toggleTheme);
+        chatThemeToggle.addEventListener('click', toggleTheme);
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                await user.reload();
+                currentUser = auth.currentUser; 
+
+                const isEmailPasswordProvider = user.providerData.some(p => p.providerId === 'password');
+                
+                if (isEmailPasswordProvider && !currentUser.emailVerified) {
+                    authSection.classList.add('hidden');
+                    userSection.classList.add('hidden');
+                    chatSection.classList.add('hidden');
+                    verifyEmailSection.classList.remove('hidden');
+                } else {
+                    verifyEmailSection.classList.add('hidden');
+                    authSection.classList.add('hidden');
+                    userSection.classList.remove('hidden');
+                    chatSection.classList.add('hidden');
+                    
+                    await createUserDocumentIfNotExists(currentUser);
+                    loadUsers(); 
+                    loadRecentChats();
+                    listenForFriendsAndRequests();
+                    setUserOnlineStatus(true);
+                    
+                    window.addEventListener('focus', () => setUserOnlineStatus(true));
+                    window.addEventListener('blur', () => setUserOnlineStatus(false, true));
+                    window.addEventListener('beforeunload', () => {
+                        if (currentUser) {
+                             db.collection('users').doc(currentUser.uid).update({
+                                status: 'offline',
+                                lastOnline: firebase.firestore.FieldValue.serverTimestamp(),
+                                currentChatId: null 
+                            });
+                        }
+                    });
+                }
+            } else {
+                currentUser = null;
+                authSection.classList.remove('hidden');
+                userSection.classList.add('hidden');
+                chatSection.classList.add('hidden');
+                verifyEmailSection.classList.add('hidden');
+                if (unsubscribeMessages) unsubscribeMessages();
+                if (unsubscribeRecentChats) unsubscribeRecentChats();
+                if (unsubscribeUserStatus) unsubscribeUserStatus();
+                if (unsubscribeTypingIndicator) unsubscribeTypingIndicator();
+                if (unsubscribeFriendsListener) unsubscribeFriendsListener();
+                if (unsubscribeRequestsListener) unsubscribeRequestsListener();
+                
+                allUsersCache = [];
+                friends.clear();
+                outgoingRequests.clear();
+                incomingRequests.clear();
+
+                window.removeEventListener('focus', () => setUserOnlineStatus(true));
+                window.removeEventListener('blur', () => setUserOnlineStatus(false, true));
+            }
+        });
+
+        function setUserOnlineStatus(online, useTimeout = false) {
+            if (!currentUser) return;
+            const userRef = db.collection('users').doc(currentUser.uid);
+            if (online) userRef.update({ status: 'online' }).catch(err => {});
+            else userRef.update({ status: 'offline', lastOnline: firebase.firestore.FieldValue.serverTimestamp() }).catch(err => {});
+        }
+
+        loginBtn.addEventListener('click', () => {
+            const emailVal = document.getElementById('email').value.trim();
+            const passwordVal = document.getElementById('password').value.trim();
+            if (!emailVal || !passwordVal) { showToast('Please enter both email and password', 'error'); return; }
+
+            const originalText = loginBtn.textContent;
+            loginBtn.innerHTML = `<span class="btn-spinner"></span>`;
+            loginBtn.disabled = true;
+            
+            auth.signInWithEmailAndPassword(emailVal, passwordVal)
+                .catch(error => showToast(`Login failed: Invalid login credentials.`, 'error'))
+                .finally(() => { loginBtn.textContent = originalText; loginBtn.disabled = false; });
+        });
+
+        signupBtn.addEventListener('click', () => {
+            const emailVal = document.getElementById('email').value.trim();
+            const passwordVal = document.getElementById('password').value.trim();
+            if (!emailVal || !passwordVal) { showToast('Please enter both email and password', 'error'); return; }
+            if (passwordVal.length < 6) { showToast('Password should be at least 6 characters', 'error'); return; }
+            
+            const originalText = signupBtn.textContent;
+            signupBtn.innerHTML = `<span class="btn-spinner"></span>`;
+            signupBtn.disabled = true;
+
+            auth.createUserWithEmailAndPassword(emailVal, passwordVal)
+                .then(userCredential => {
+                    userCredential.user.sendEmailVerification()
+                        .then(() => showToast('Signup successful! A verification email has been sent.', 'success'));
+                })
+                .catch(error => showToast(`Sign up failed: ${error.message}`, 'error'))
+                .finally(() => { signupBtn.textContent = originalText; signupBtn.disabled = false; });
+        });
+
+        googleLoginBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => showToast(`Google sign-in failed: ${error.message}`, 'error'));
+        });
+
+        const handleSignOut = () => { setUserOnlineStatus(false); auth.signOut(); };
+        menuSignoutBtn.addEventListener('click', handleSignOut);
+        chatSignoutBtn.addEventListener('click', handleSignOut);
+        verificationLogoutBtn.addEventListener('click', handleSignOut);
+
+        resendVerificationBtn.addEventListener('click', () => {
+            if (!currentUser) return;
+            const originalText = resendVerificationBtn.textContent;
+            resendVerificationBtn.innerHTML = `<span class="btn-spinner"></span>`;
+            resendVerificationBtn.disabled = true;
+            currentUser.sendEmailVerification()
+                .then(() => showToast('Verification email resent. Please check your inbox.', 'success'))
+                .catch(error => showToast(`Error: ${error.message}`, 'error'))
+                .finally(() => { resendVerificationBtn.textContent = originalText; resendVerificationBtn.disabled = false; });
+        });
+
+        backToUsersBtn.addEventListener('click', () => {
+            if (unsubscribeMessages) unsubscribeMessages();
+            if (unsubscribeUserStatus) unsubscribeUserStatus();
+            if (unsubscribeTypingIndicator) unsubscribeTypingIndicator();
+            if(currentUser) db.collection('users').doc(currentUser.uid).update({ currentChatId: null });
+            userSection.classList.remove('hidden');
+            chatSection.classList.add('hidden');
+            selectedUserId = null;
+            userSearchInput.value = ''; 
+            filterUsers();
+            resetMessageInput();
+        });
+
+        userSearchInput.addEventListener('input', filterUsers);
+
+        function loadUsers() {
+            if (!currentUser) return;
+            db.collection('users').onSnapshot(snapshot => {
+                allUsersCache = []; 
+                snapshot.forEach(doc => {
+                    const user = doc.data();
+                    if (user.uid !== currentUser.uid) allUsersCache.push(user);
+                });
+                filterUsers();
+            }, error => console.error("Error loading users: ", error));
+        }
+
+        function filterUsers() {
+            const searchTerm = userSearchInput.value.toLowerCase();
+            userList.innerHTML = ''; 
+            
+            if (searchTerm === '') {
+                userList.style.display = 'none';
+                showMainContent();
+                return;
+            }
+
+            userList.style.display = 'block';
+            recentChatsContainer.style.display = 'none';
+            friendRequestsContainer.classList.add('hidden');
+
+            let hasVisibleItems = false;
+            allUsersCache.forEach(user => {
+                const userName = (user.displayName || user.email.split('@')[0]).toLowerCase();
+                const userEmail = user.email.toLowerCase();
+
+                if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
+                    createUserElement(user); 
+                    hasVisibleItems = true;
+                }
+            });
+
+            let noResultsDiv = userList.querySelector('#no-search-results-message');
+            if (!hasVisibleItems) {
+                if (!noResultsDiv) {
+                    noResultsDiv = document.createElement('div');
+                    noResultsDiv.id = 'no-search-results-message';
+                    noResultsDiv.textContent = 'No users found';
+                    userList.appendChild(noResultsDiv);
+                }
+            } else {
+                 if (noResultsDiv) noResultsDiv.remove();
+            }
+        }
+
+        function loadRecentChats() {
+            if (!currentUser) return;
+            if (unsubscribeRecentChats) unsubscribeRecentChats();
+            unsubscribeRecentChats = db.collection('recentChats').doc(currentUser.uid).collection('chats').orderBy('lastMessageTime', 'desc')
+                .onSnapshot(snapshot => {
+                    const header = recentChatsContainer.querySelector('.recent-chats-header');
+                    recentChatsContainer.innerHTML = '';
+                    if(header) recentChatsContainer.appendChild(header);
+                    
+                    if (snapshot.empty) {
+                        let noRecentMsg = document.getElementById('no-recent-chats-message');
+                        if (!noRecentMsg) {
+                            noRecentMsg = document.createElement('div');
+                            noRecentMsg.id = 'no-recent-chats-message';
+                            noRecentMsg.textContent = 'No recent chats. Start a conversation with a friend!';
+                            recentChatsContainer.appendChild(noRecentMsg);
+                        }
+                    } else {
+                         let noRecentMsg = document.getElementById('no-recent-chats-message');
+                         if(noRecentMsg) noRecentMsg.remove();
+                        snapshot.forEach(doc => createRecentChatElement(doc.data()));
+                    }
+                }, error => console.error("Error loading recent chats: ", error));
+        }
+
+        function createRecentChatElement(chat) {
+            const chatElement = document.createElement('div');
+            chatElement.className = 'recent-chat-item';
+            chatElement.dataset.participantId = chat.participantId; 
+            const lastMessageTime = chat.lastMessageTime?.toDate();
+            const unreadCount = chat.unreadCount || 0;
+            
+            chatElement.innerHTML = `
+                <div class="recent-chat-avatar">
+                    ${chat.participantPhotoURL ? `<img src="${chat.participantPhotoURL}" alt="${chat.participantName}">` : `<span class="material-icons">account_circle</span>`}
+                    <div class="recent-chat-status ${chat.participantStatus || 'offline'}"></div>
+                </div>
+                <div class="recent-chat-info">
+                    <div class="recent-chat-name">${chat.participantName}</div>
+                    <div class="recent-chat-last-message">${chat.lastMessage ? (chat.lastMessage.length > 30 ? chat.lastMessage.substring(0, 30) + '...' : chat.lastMessage) : 'No messages yet'}</div>
+                </div>
+                <div class="recent-chat-time">${lastMessageTime ? formatTime(lastMessageTime) : ''}</div>
+                ${unreadCount > 0 ? `<span class="recent-chat-unread">${unreadCount}</span>` : ''}
+            `;
+            
+            chatElement.addEventListener('click', () => {
+                startChatWithUser({
+                    uid: chat.participantId,
+                    displayName: chat.participantName,
+                    photoURL: chat.participantPhotoURL
+                });
+                if (unreadCount > 0) db.collection('recentChats').doc(currentUser.uid).collection('chats').doc(chat.participantId).update({ unreadCount: 0 });
+            });
+            recentChatsContainer.appendChild(chatElement);
+        }
+
+        function createUserElement(user) {
+            const userElement = document.createElement('div');
+            userElement.className = 'user-item';
+            userElement.dataset.uid = user.uid; 
+            
+            userElement.innerHTML = `
+                <div class="user-avatar">
+                    ${user.photoURL ? `<img src="${user.photoURL}" alt="${user.displayName || user.email}">` : `<span class="material-icons">account_circle</span>`}
+                    <div class="user-status ${user.status || 'offline'}"></div>
+                </div>
+                <div class="user-info">
+                    <div class="user-name">${user.displayName || user.email.split('@')[0]}</div>
+                    <div class="user-email">${user.email}</div>
+                </div>
+                <div class="user-item-actions"></div>
+            `;
+            
+            const actionsContainer = userElement.querySelector('.user-item-actions');
+            renderUserActions(actionsContainer, user);
+            const userInfoDiv = userElement.querySelector('.user-info');
+            if (friends.has(user.uid)) {
+                userInfoDiv.style.cursor = 'pointer';
+                userInfoDiv.addEventListener('click', () => startChatWithUser(user));
+            } else {
+                 userInfoDiv.style.cursor = 'default';
+            }
+            userList.appendChild(userElement);
+        }
+        
+        function startChatWithUser(user) {
+            selectedUserId = user.uid;
+            selectedUserName = user.displayName || user.email.split('@')[0];
+            selectedUserAvatar = user.photoURL || '';
+            chatWithUserElement.textContent = `Chat with ${selectedUserName}`;
+            userSection.classList.add('hidden');
+            chatSection.classList.remove('hidden');
+            loadMessages();
+            userSearchInput.value = '';
+            if (currentUser) db.collection('users').doc(currentUser.uid).update({ currentChatId: selectedUserId });
+        }
+
+        function loadMessages() {
+            if (!currentUser || !selectedUserId) return;
+            
+            if (!friends.has(selectedUserId)) {
+                messagesContainer.innerHTML = `<div style="text-align: center; margin: auto; padding: 2rem; color: var(--text-secondary);"><span class="material-icons" style="font-size: 4rem; margin-bottom: 1rem;">person_add_disabled</span><h3 style="color: var(--text-color);">Not Friends</h3><p>You must be friends with this user to send messages.</p></div>`;
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+                document.querySelector('.message-input-container').classList.add('hidden');
+                return;
+            }
+            document.querySelector('.message-input-container').classList.remove('hidden');
+            messageInput.disabled = false;
+            sendBtn.disabled = messageInput.value.trim() === '';
+
+            const conversationId = [currentUser.uid, selectedUserId].sort().join('_');
+            if (unsubscribeMessages) unsubscribeMessages();
+            if (unsubscribeUserStatus) unsubscribeUserStatus();
+            if (unsubscribeTypingIndicator) unsubscribeTypingIndicator();
+            messagesContainer.innerHTML = ''; 
+            typingIndicatorContainer.innerHTML = '';
+            
+            unsubscribeUserStatus = db.collection('users').doc(selectedUserId).onSnapshot(doc => {
+                const userData = doc.data();
+                if (userData) {
+                    const lastOnlineTime = userData.lastOnline ? userData.lastOnline.toDate() : null;
+                    let statusDetail = userData.status === 'online' ? 'Online' : `Offline`;
+                     if (userData.status === 'offline' && lastOnlineTime) statusDetail += ` (Last seen: ${formatTime(lastOnlineTime, true)})`;
+                     chatWithUserElement.textContent = `${selectedUserName} (${statusDetail})`;
+                }
+            }, error => console.error("Error fetching user status for chat header:", error));
+            
+            unsubscribeTypingIndicator = db.collection('typingIndicators').doc(conversationId).onSnapshot(doc => {
+                const typingData = doc.data();
+                if (typingData && typingData.userId === selectedUserId && typingData.isTyping) showTypingIndicator(selectedUserName);
+                else hideTypingIndicator();
+            }, error => console.error("Error fetching typing indicator:", error));
+            
+            unsubscribeMessages = db.collection('conversations').doc(conversationId).collection('messages').orderBy('timestamp', 'asc')
+                .onSnapshot(snapshot => {
+                    const placeholder = messagesContainer.querySelector('div[style*="text-align: center"]');
+                    if (snapshot.empty && !placeholder) {
+                        messagesContainer.innerHTML = `<div style="text-align: center; margin: auto; padding: 2rem; color: var(--text-secondary);"><span class="material-icons" style="font-size: 4rem; margin-bottom: 1rem;">waving_hand</span><h3 style="color: var(--text-color);">Start the conversation!</h3><p>You are now friends. Send a message to get started.</p></div>`;
+                        return;
+                    }
+                    if(!snapshot.empty && placeholder) placeholder.remove();
+                    
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const messageElement = displayMessage(change.doc.data(), change.doc.id);
+                            messagesContainer.appendChild(messageElement);
+                            if (change.doc.data().senderId === selectedUserId && !change.doc.data().read && document.hasFocus() && !chatSection.classList.contains('hidden')) {
+                                db.collection('conversations').doc(conversationId).collection('messages').doc(change.doc.id).update({ read: true });
+                            }
+                        }
+                        if (change.type === 'modified') {
+                            const existingElement = messagesContainer.querySelector(`.message[data-message-id="${change.doc.id}"]`);
+                            if (existingElement) existingElement.replaceWith(displayMessage(change.doc.data(), change.doc.id));
+                        }
+                        if (change.type === 'removed') {
+                            const existingElement = messagesContainer.querySelector(`.message[data-message-id="${change.doc.id}"]`);
+                            if (existingElement) existingElement.remove();
+                        }
+                    });
+                    
+                    if (snapshot.docChanges().some(change => change.type === 'added')) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, error => showToast("Error loading messages.", "error"));
+            
+            markAllMessagesFromSelectedUserAsRead(conversationId);
+        }
+
+        function markAllMessagesFromSelectedUserAsRead(conversationId) {
+            if (!currentUser || !selectedUserId) return;
+            db.collection('conversations').doc(conversationId).collection('messages').where('senderId', '==', selectedUserId).where('read', '==', false).get()
+                .then(querySnapshot => {
+                    const batch = db.batch();
+                    querySnapshot.forEach(doc => batch.update(doc.ref, { read: true }));
+                    return batch.commit();
+                })
+                .then(() => db.collection('recentChats').doc(currentUser.uid).collection('chats').doc(selectedUserId).update({ unreadCount: 0 }).catch(()=>{}));
+        }
+
+        function showTypingIndicator(userName) {
+            if (typingIndicatorContainer.innerHTML === '') { 
+                typingIndicatorContainer.innerHTML = `<div class="typing-indicator"><span>${userName} is typing</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        function hideTypingIndicator() { typingIndicatorContainer.innerHTML = ''; }
+
+        function updateTypingStatus(isTypingNow) {
+            if (!currentUser || !selectedUserId) return;
+            const conversationId = [currentUser.uid, selectedUserId].sort().join('_');
+            db.collection('typingIndicators').doc(conversationId).set({ userId: currentUser.uid, isTyping: isTypingNow }, { merge: true }); 
+        }
+
+        function displayMessage(message, messageId) {
+            const isSent = message.senderId === currentUser.uid;
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
+            messageElement.dataset.messageId = messageId; 
+            if (messageId === currentlyEditingMessageId && message.text) messageElement.classList.add('message-editing');
+            
+            let messageHTML = '';
+            if (!isSent) messageHTML += `<div class="message-sender">${message.senderName || 'User'}</div>`;
+            if (message.replyTo) messageHTML += `<div class="message-reply"><div class="message-reply-sender">Replying to ${message.replyTo.senderName || 'User'}</div><div class="message-reply-text">${message.replyTo.text ? (message.replyTo.text.length > 60 ? message.replyTo.text.substring(0, 60) + '...' : message.replyTo.text) : 'Attachment'}</div></div>`;
+            
+            let textContentHTML = '';
+            if (message.text) textContentHTML += `<p>${message.text}</p>`;
+            if (message.edited && message.text) textContentHTML += `<span style="color: var(--text-secondary); font-size: 0.8em; margin-left: 0.4em;">(edited)</span>`;
+            
+            let attachmentsHTML = '';
+            if (message.imageUrl) attachmentsHTML += `<img src="${message.imageUrl}" alt="${message.fileName || "Sent image"}" class="image-preview">`;
+            if (message.fileUrl && !message.imageUrl) attachmentsHTML += `<div class="file-preview"><span class="material-icons file-preview-icon">insert_drive_file</span><div class="file-preview-info"><div class="file-preview-name">${message.fileName || 'File'}</div><div class="file-preview-size">${message.fileSize ? formatFileSize(message.fileSize) : ''}</div></div><a href="${message.fileUrl}" download="${message.fileName || 'File'}" class="file-preview-download" title="Download ${message.fileName || 'File'}"><span class="material-icons">download</span></a></div>`;
+            
+            messageHTML += `<div class="message-text">${textContentHTML}${attachmentsHTML}</div>`;
+
+            let reactionsHTML = '';
+            const reactionCounts = {};
+            if (message.reactions) Object.values(message.reactions).forEach(emoji => { reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1; });
+            Object.entries(reactionCounts).forEach(([emoji, count]) => {
+                const isActive = message.reactions && message.reactions[currentUser.uid] === emoji ? 'active' : '';
+                reactionsHTML += `<div class="message-reaction ${isActive}" data-emoji="${emoji}">${emoji} ${count}</div>`;
+            });
+            reactionsHTML += `<div class="message-reaction add-reaction" title="Add reaction"><span class="material-icons" style="font-size:1em;">add_reaction</span></div>`;
+            
+            let timeHTML = `<div class="message-info">${message.timestamp ? formatTime(message.timestamp.toDate()) : 'Sending...'}`;
+            if (isSent) {
+                let receiptIcon = 'done', receiptTitle = 'Sent', receiptClass = '';
+                if (message.read) { receiptIcon = 'done_all'; receiptTitle = 'Read'; receiptClass = 'read'; }
+                timeHTML += `<span class="material-icons receipt-icon ${receiptClass}" title="${receiptTitle}">${receiptIcon}</span>`;
+            }
+            timeHTML += '</div>';
+
+            const actionsHTML = `<div class="message-actions">${isSent && message.text ? `<span class="material-icons message-action edit-message" title="Edit">edit</span>` : ''}${isSent ? `<span class="material-icons message-action delete-message" title="Delete">delete</span>` : ''}<span class="material-icons message-action reply-message" title="Reply">reply</span></div>`;
+
+            messageElement.innerHTML = `<div>${actionsHTML}${messageHTML}</div><div class="message-reactions">${reactionsHTML}</div>${timeHTML}`;
+
+            messageElement.querySelector('.message-reactions').addEventListener('click', (e) => {
+                const reactionElement = e.target.closest('.message-reaction');
+                if (!reactionElement) return;
+                if (reactionElement.classList.contains('add-reaction')) showReactionPicker(reactionElement, messageId);
+                else toggleReaction(messageId, reactionElement.dataset.emoji);
+            });
+
+            if (messageElement.querySelector('.edit-message')) messageElement.querySelector('.edit-message').addEventListener('click', () => editMessage(messageId, message.text));
+            if (messageElement.querySelector('.delete-message')) messageElement.querySelector('.delete-message').addEventListener('click', () => deleteMessage(messageId));
+            messageElement.querySelector('.reply-message').addEventListener('click', () => replyToMessage(messageId, message.text || message.fileName || "Attachment", message.senderName));
+            if (messageElement.querySelector('.image-preview')) messageElement.querySelector('.image-preview').addEventListener('click', () => showImageModal(message.imageUrl));
+            return messageElement;
+        }
+
+        function showReactionPicker(anchorElement, messageId) {
+            const existingPicker = document.querySelector('.reaction-picker');
+            if (existingPicker) existingPicker.remove();
+            const pickerElement = document.createElement('div');
+            pickerElement.className = 'reaction-picker';
+            ['👍', '❤️', '😂', '😮', '😢', '😡', '👏'].forEach(emoji => {
+                const emojiDiv = document.createElement('div');
+                emojiDiv.className = 'reaction-emoji';
+                emojiDiv.textContent = emoji;
+                emojiDiv.onclick = (e) => { e.stopPropagation(); toggleReaction(messageId, emoji); pickerElement.remove(); };
+                pickerElement.appendChild(emojiDiv);
+            });
+            document.body.appendChild(pickerElement); 
+            const rect = anchorElement.getBoundingClientRect();
+            const pickerRect = pickerElement.getBoundingClientRect();
+            let top = rect.top - pickerRect.height - 10;
+            let left = rect.left + (rect.width / 2) - (pickerRect.width / 2);
+            if (top < 0) top = rect.bottom + 10;
+            if (left < 0) left = 5;
+            if (left + pickerRect.width > window.innerWidth) left = window.innerWidth - pickerRect.width - 5;
+            pickerElement.style.top = `${top}px`;
+            pickerElement.style.left = `${left}px`;
+            setTimeout(() => document.addEventListener('click', function hide(e) {
+                if (!pickerElement.contains(e.target)) {
+                    pickerElement.remove();
+                    document.removeEventListener('click', hide, true);
+                }
+            }, true), 0);
+        }
+
+        function toggleReaction(messageId, emoji) {
+            if (!currentUser || !selectedUserId || !messageId) return;
+            const conversationId = [currentUser.uid, selectedUserId].sort().join('_');
+            const messageRef = db.collection('conversations').doc(conversationId).collection('messages').doc(messageId);
+            db.runTransaction(transaction => transaction.get(messageRef).then(doc => {
+                    if (!doc.exists) throw "Document does not exist!";
+                    const reactions = doc.data().reactions || {};
+                    if (reactions[currentUser.uid] === emoji) delete reactions[currentUser.uid];
+                    else reactions[currentUser.uid] = emoji;
+                    transaction.update(messageRef, { reactions });
+                })).catch(error => showToast("Could not update reaction.", "error"));
+        }
+
+        function showImageModal(imageUrl) { modalImage.src = imageUrl; imageModal.classList.remove('hidden'); }
+        closeImageModal.addEventListener('click', () => imageModal.classList.add('hidden'));
+
+        function editMessage(messageId, currentText) {
+            currentlyEditingMessageId = messageId;
+            messageInput.value = currentText;
+            messageInput.focus();
+            messageInput.placeholder = 'Editing message...';
+            replyPreview.classList.add('hidden'); 
+            replyingToMessageId = null;
+            document.querySelectorAll('.message.message-editing').forEach(m => m.classList.remove('message-editing'));
+            const msgElement = document.querySelector(`.message[data-message-id="${messageId}"]`);
+            if (msgElement) msgElement.classList.add('message-editing');
+            sendBtn.disabled = messageInput.value.trim() === '';
+        }
+
+        function replyToMessage(messageId, messageText, senderName) {
+            replyingToMessageId = messageId;
+            const replyTextContent = messageText ? (messageText.length > 30 ? messageText.substring(0, 30) + '...' : messageText) : 'Attachment';
+            replyPreviewText.innerHTML = `Replying to <strong>${senderName}</strong>: ${replyTextContent}`;
+            replyPreview.classList.remove('hidden');
+            messageInput.focus();
+            currentlyEditingMessageId = null; 
+            document.querySelectorAll('.message.message-editing').forEach(m => m.classList.remove('message-editing'));
+            messageInput.placeholder = 'Type your reply...';
+        }
+        cancelReply.addEventListener('click', () => {
+            replyPreview.classList.add('hidden');
+            replyingToMessageId = null;
+            if (!currentlyEditingMessageId) messageInput.placeholder = 'Type your message...';
+        });
+
+        function deleteMessage(messageId) {
+            if (!currentUser || !selectedUserId || !messageId) return;
+            const conversationId = [currentUser.uid, selectedUserId].sort().join('_');
+            if (confirm('Are you sure you want to delete this message?')) {
+                db.collection('conversations').doc(conversationId).collection('messages').doc(messageId).delete()
+                    .catch(error => showToast(`Error deleting message: ${error.message}`, 'error'));
+            }
+        }
+        
+        async function sendMessage() {
+            const messageText = messageInput.value.trim();
+            if ((messageText === '' && !selectedFile) || !currentUser || !selectedUserId) {
+                if(!currentlyEditingMessageId) return;
+            }
+            const conversationId = [currentUser.uid, selectedUserId].sort().join('_');
+            const originalBtnContent = sendBtn.innerHTML;
+            sendBtn.innerHTML = `<span class="btn-spinner"></span>`; sendBtn.disabled = true;
+
+            try {
+                if (currentlyEditingMessageId) {
+                    if (selectedFile) { showToast("Cannot attach a file while editing.", "error"); sendBtn.innerHTML = originalBtnContent; sendBtn.disabled = false; return; }
+                    const updateData = { text: messageText, edited: true, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+                    await db.collection('conversations').doc(conversationId).collection('messages').doc(currentlyEditingMessageId).update(updateData);
+                } else {
+                    let messageData = {};
+                    if (selectedFile) messageData = await uploadFile();
+                    const message = {
+                        senderId: currentUser.uid, senderName: currentUser.displayName || currentUser.email.split('@')[0],
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(), read: false, ...messageData 
+                    };
+                    if (messageText) message.text = messageText;
+                    const finalMessage = await addReplyToMessageIfNeeded(message, conversationId);
+                    await sendMessageToFirestore(finalMessage, conversationId);
+                }
+                resetMessageInput();
+            } catch (error) { showToast(`Failed to send message: ${error.message}`, 'error'); } 
+            finally { sendBtn.innerHTML = originalBtnContent; sendBtn.disabled = messageInput.value.trim() === '' && !selectedFile; }
+        }
+
+        async function addReplyToMessageIfNeeded(message, conversationId) {
+            if (replyingToMessageId) {
+                try {
+                    const doc = await db.collection('conversations').doc(conversationId).collection('messages').doc(replyingToMessageId).get();
+                    if (doc.exists) message.replyTo = { messageId: replyingToMessageId, senderName: doc.data().senderName, text: doc.data().text || doc.data().fileName || 'Attachment' };
+                } catch (error) { console.error("Error fetching reply message:", error); }
+            }
+            return message;
+        }
+
+        async function sendMessageToFirestore(message, conversationId) {
+            await db.collection('conversations').doc(conversationId).collection('messages').add(message);
+            updateRecentChats(message.text || message.fileName || 'Attachment', selectedUserId, selectedUserName, selectedUserAvatar);
+        }
+
+        function uploadFile() {
+            return new Promise((resolve, reject) => {
+                if (!selectedFile) return reject(new Error('No file selected.'));
+                const CLOUD_NAME = 'dxzj4mfev', UPLOAD_PRESET = '54chatweb', URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+                const formData = new FormData();
+                formData.append('file', selectedFile); formData.append('upload_preset', UPLOAD_PRESET);
+                fetch(URL, { method: 'POST', body: formData }).then(response => response.json())
+                .then(data => {
+                    if (data.error) return reject(new Error(data.error.message));
+                    const fileData = { fileName: data.original_filename, fileSize: data.bytes, fileType: data.resource_type };
+                    if (data.resource_type === 'image') fileData.imageUrl = data.secure_url;
+                    else fileData.fileUrl = data.secure_url;
+                    resolve(fileData);
+                }).catch(error => reject(error));
+            });
+        }
+        
+        function uploadProfilePicture(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject(new Error('No file selected.'));
+                const CLOUD_NAME = 'dxzj4mfev', UPLOAD_PRESET = '54chatweb', FOLDER = '54chatweb_profiles', URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+                const formData = new FormData();
+                formData.append('file', file); formData.append('upload_preset', UPLOAD_PRESET); formData.append('folder', FOLDER);
+                fetch(URL, { method: 'POST', body: formData }).then(response => response.json())
+                .then(data => data.error ? reject(new Error(data.error.message)) : resolve(data.secure_url))
+                .catch(error => reject(error));
+            });
+        }
+
+        function resetMessageInput() {
+            messageInput.value = '';
+            if (currentlyEditingMessageId) { 
+                 const editedMsgElement = document.querySelector(`.message.message-editing`);
+                 if(editedMsgElement) editedMsgElement.classList.remove('message-editing');
+            }
+            currentlyEditingMessageId = null; replyingToMessageId = null;
+            replyPreview.classList.add('hidden');
+            clearFileSelection();
+            messageInput.placeholder = 'Type your message...';
+            updateTypingStatus(false); isTyping = false; sendBtn.disabled = true; 
+        }
+
+        function clearFileSelection() {
+            selectedFile = null; filePreview.classList.add('hidden');
+            fileName.textContent = ''; fileSize.textContent = ''; fileUpload.value = ''; 
+            sendBtn.disabled = messageInput.value.trim() === '' && !selectedFile;
+        }
+        cancelFile.addEventListener('click', clearFileSelection);
+
+        function updateRecentChats(lastMsgText, participantId, participantName, participantPhoto) {
+            if (!currentUser || !participantId) return;
+            const commonData = { lastMessage: lastMsgText, lastMessageTime: firebase.firestore.FieldValue.serverTimestamp() };
+            const myChatRef = db.collection('recentChats').doc(currentUser.uid).collection('chats').doc(participantId);
+            myChatRef.set({ ...commonData, participantId, participantName, participantPhotoURL: participantPhoto || '', unreadCount: 0 }, { merge: true });
+            const theirChatRef = db.collection('recentChats').doc(participantId).collection('chats').doc(currentUser.uid);
+            theirChatRef.set({ ...commonData, participantId: currentUser.uid, participantName: currentUser.displayName || currentUser.email.split('@')[0], participantPhotoURL: currentUser.photoURL || '', unreadCount: firebase.firestore.FieldValue.increment(1) }, { merge: true });
+            db.collection('users').doc(participantId).get().then(doc => {
+                if (doc.exists && doc.data().currentChatId === currentUser.uid) theirChatRef.update({ unreadCount: 0 });
+            });
+        }
+
+        function formatTime(date, detailed = false) {
+            if (!date) return '';
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            if (messageDate.getTime() === today.getTime()) return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+            if (messageDate.getTime() === yesterday.getTime()) return detailed ? `Yesterday at ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Yesterday';
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + (detailed ? ` at ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : '');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024, sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'], i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        async function createUserDocumentIfNotExists(user) {
+            const userRef = db.collection('users').doc(user.uid);
+            const doc = await userRef.get();
+            if (!doc.exists) {
+                 const displayName = user.displayName || user.email.split('@')[0];
+                 const photoURL = user.photoURL || predefinedAvatars[0];
+                 await userRef.set({
+                    uid: user.uid, email: user.email, displayName, photoURL,
+                    status: 'online', lastOnline: firebase.firestore.FieldValue.serverTimestamp(),
+                    currentChatId: null, friends: [], createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await user.updateProfile({ displayName, photoURL });
+            } else { await userRef.update({ status: 'online' }); }
+        }
+
+        forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); resetPasswordModal.classList.remove('hidden'); resetEmail.focus(); });
+        closeModalButtons.forEach(button => button.addEventListener('click', () => button.closest('.modal, .modal-overlay')?.classList.add('hidden')));
+        window.addEventListener('click', (e) => { if (e.target.classList.contains('modal') || e.target.classList.contains('modal-overlay')) e.target.classList.add('hidden'); });
+
+        sendResetLink.addEventListener('click', () => {
+            const emailVal = resetEmail.value.trim(); if (!emailVal) return;
+            const originalText = sendResetLink.textContent;
+            sendResetLink.innerHTML = `<span class="btn-spinner"></span> Sending...`; sendResetLink.disabled = true;
+            auth.sendPasswordResetEmail(emailVal)
+                .then(() => { showToast('Password reset email sent!', 'success'); setTimeout(() => resetPasswordModal.classList.add('hidden'), 3000); })
+                .catch(error => showToast(`Error: ${error.message}`, 'error'))
+                .finally(() => { sendResetLink.disabled = false; sendResetLink.textContent = originalText; });
+        });
+        resetEmail.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendResetLink.click(); });
+        
+        emojiBtn.addEventListener('click', (e) => { e.stopPropagation(); picker.classList.toggle('hidden'); });
+        picker.addEventListener('emoji-click', e => { messageInput.value += e.detail.unicode; messageInput.dispatchEvent(new Event('input')); });
+        document.addEventListener('click', (e) => { if (!emojiBtn.contains(e.target) && !picker.contains(e.target)) picker.classList.add('hidden'); });
+
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) { clearFileSelection(); return; }
+            selectedFile = file; fileName.textContent = file.name.length > 25 ? file.name.substring(0,22) + "..." : file.name;
+            fileSize.textContent = formatFileSize(file.size); filePreview.classList.remove('hidden'); sendBtn.disabled = false; 
+        });
+
+        messageInput.addEventListener('input', () => {
+            sendBtn.disabled = messageInput.value.trim() === '' && !selectedFile;
+            if (!isTyping && messageInput.value.trim() !== '') { isTyping = true; updateTypingStatus(true); }
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => { if (isTyping && messageInput.value.trim() === '') { isTyping = false; updateTypingStatus(false); } }, 1500);
+        });
+        messageInput.addEventListener('blur', () => { clearTimeout(typingTimeout); if (isTyping) { isTyping = false; updateTypingStatus(false); } });
+        
+        function openProfileModal() {
+            if (!currentUser) return;
+            newUserAvatarFile = null; avatarUploadInput.value = '';
+            profileDisplayNameInput.value = currentUser.displayName || '';
+            profileEmailElement.textContent = currentUser.email;
+            profileAvatarPreview.src = currentUser.photoURL || predefinedAvatars[0];
+            tempSelectedAvatarUrl = currentUser.photoURL;
+            avatarSelectionGrid.innerHTML = '';
+            predefinedAvatars.forEach(url => {
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = `selectable-avatar ${url === tempSelectedAvatarUrl ? 'selected' : ''}`;
+                avatarDiv.innerHTML = `<img src="${url}" alt="Avatar">`;
+                avatarDiv.onclick = () => {
+                    tempSelectedAvatarUrl = url; profileAvatarPreview.src = url;
+                    document.querySelectorAll('.selectable-avatar.selected').forEach(el => el.classList.remove('selected'));
+                    avatarDiv.classList.add('selected'); newUserAvatarFile = null; avatarUploadInput.value = '';
+                };
+                avatarSelectionGrid.appendChild(avatarDiv);
+            });
+            profileModal.classList.remove('hidden');
+        }
+        menuProfileBtn.addEventListener('click', openProfileModal);
+
+        avatarUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
+                newUserAvatarFile = file;
+                const reader = new FileReader();
+                reader.onload = (event) => { profileAvatarPreview.src = event.target.result; };
+                reader.readAsDataURL(file);
+                document.querySelectorAll('.selectable-avatar.selected').forEach(el => el.classList.remove('selected'));
+                tempSelectedAvatarUrl = null;
+            }
+        });
+
+        saveProfileBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+            const newDisplayName = profileDisplayNameInput.value.trim();
+            if (!newDisplayName) { showToast("Display name cannot be empty.", "error"); return; }
+            const originalText = saveProfileBtn.textContent;
+            saveProfileBtn.innerHTML = `<span class="btn-spinner"></span> Saving...`; saveProfileBtn.disabled = true;
+            try {
+                const newPhotoURL = newUserAvatarFile ? await uploadProfilePicture(newUserAvatarFile) : tempSelectedAvatarUrl;
+                const authUpdates = {}, firestoreUpdates = {}; let changesMade = false;
+                if (newDisplayName !== currentUser.displayName) { authUpdates.displayName = newDisplayName; firestoreUpdates.displayName = newDisplayName; changesMade = true; }
+                if (newPhotoURL && newPhotoURL !== currentUser.photoURL) { authUpdates.photoURL = newPhotoURL; firestoreUpdates.photoURL = newPhotoURL; changesMade = true; }
+                if (changesMade) { await currentUser.updateProfile(authUpdates); await db.collection('users').doc(currentUser.uid).update(firestoreUpdates); showToast("Profile updated!", "success"); }
+                profileModal.classList.add('hidden');
+            } catch (error) { showToast(`Error updating profile: ${error.message}`, 'error'); } 
+            finally { saveProfileBtn.textContent = originalText; saveProfileBtn.disabled = false; newUserAvatarFile = null; avatarUploadInput.value = ''; }
+        });
+        
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!hamburgerBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
+        
+        function listenForFriendsAndRequests() {
+            if (!currentUser) return;
+            if (unsubscribeFriendsListener) unsubscribeFriendsListener();
+            unsubscribeFriendsListener = db.collection('users').doc(currentUser.uid).onSnapshot(doc => {
+                    friends = new Set(doc.data()?.friends || []);
+                    if(userList.style.display === 'block') filterUsers();
+                });
+            if (unsubscribeRequestsListener) unsubscribeRequestsListener();
+            unsubscribeRequestsListener = db.collection('friendRequests').where('status', '==', 'pending').onSnapshot(snapshot => {
+                    incomingRequests.clear(); outgoingRequests.clear();
+                    snapshot.forEach(doc => {
+                        const request = { id: doc.id, ...doc.data() };
+                        if (request.receiverId === currentUser.uid) incomingRequests.set(request.senderId, request);
+                        if (request.senderId === currentUser.uid) outgoingRequests.add(request.receiverId);
+                    });
+                    renderFriendRequests();
+                    if(userList.style.display === 'block') filterUsers();
+                });
+        }
+        
+        function showMainContent() {
+             friendRequestsContainer.classList.add('hidden');
+             recentChatsContainer.style.display = 'block';
+        }
+        
+        menuFrBtn.addEventListener('click', () => {
+            dropdownMenu.classList.add('hidden');
+            userSearchInput.value = '';
+            userList.style.display = 'none';
+            recentChatsContainer.style.display = 'none';
+            friendRequestsContainer.classList.remove('hidden');
+        });
+        closeFrPanelBtn.addEventListener('click', showMainContent);
+
+        function renderFriendRequests() {
+            friendRequestsList.innerHTML = '';
+            if (incomingRequests.size > 0) {
+                friendRequestsBadge.textContent = incomingRequests.size;
+                friendRequestsBadge.classList.remove('hidden');
+                incomingRequests.forEach(request => {
+                    const reqElement = document.createElement('div');
+                    reqElement.className = 'friend-request-item';
+                    reqElement.innerHTML = `<div class="user-avatar">${request.senderPhotoURL ? `<img src="${request.senderPhotoURL}" alt="${request.senderName}">` : '<span class="material-icons">account_circle</span>'}</div><div class="user-info"><div class="user-name">${request.senderName}</div><div class="user-email">Wants to be your friend</div></div><div class="user-item-actions"><button class="action-btn accept">Accept</button><button class="action-btn decline">Decline</button></div>`;
+                    reqElement.querySelector('.accept').onclick = () => acceptFriendRequest(request.senderId, request.id);
+                    reqElement.querySelector('.decline').onclick = () => declineFriendRequest(request.id);
+                    friendRequestsList.appendChild(reqElement);
+                });
+            } else {
+                friendRequestsBadge.classList.add('hidden');
+                friendRequestsList.innerHTML = '<div id="no-friend-requests-message">No new friend requests</div>';
+            }
+        }
+
+        function renderUserActions(container, user) {
+            container.innerHTML = ''; const userId = user.uid;
+            if (friends.has(userId)) return;
+            if (outgoingRequests.has(userId)) { container.innerHTML = `<button class="action-btn sent" disabled>Request Sent</button>`; return; }
+            if (incomingRequests.has(userId)) {
+                const request = incomingRequests.get(userId);
+                const acceptBtn = document.createElement('button');
+                acceptBtn.className = 'action-btn accept'; acceptBtn.textContent = 'Accept';
+                acceptBtn.onclick = () => acceptFriendRequest(userId, request.id);
+                container.appendChild(acceptBtn);
+                return;
+            }
+            const addBtn = document.createElement('button');
+            addBtn.className = 'action-btn add'; addBtn.textContent = 'Add Friend';
+            addBtn.onclick = () => sendFriendRequest(userId);
+            container.appendChild(addBtn);
+        }
+
+        async function sendFriendRequest(receiverId) {
+            if (!currentUser) return;
+            const request = { senderId: currentUser.uid, senderName: currentUser.displayName, senderPhotoURL: currentUser.photoURL, receiverId: receiverId, status: 'pending', timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+            try { await db.collection('friendRequests').add(request); showToast('Friend request sent!', 'success'); } 
+            catch (error) { showToast(`Error: ${error.message}`, 'error'); }
+        }
+
+        async function acceptFriendRequest(senderId, requestId) {
+            if (!currentUser) return;
+            const batch = db.batch();
+            batch.update(db.collection('friendRequests').doc(requestId), { status: 'accepted' });
+            batch.update(db.collection('users').doc(currentUser.uid), { friends: firebase.firestore.FieldValue.arrayUnion(senderId) });
+            batch.update(db.collection('users').doc(senderId), { friends: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
+            try { await batch.commit(); showToast('Friend request accepted!', 'success'); } 
+            catch (error) { showToast(`Error: ${error.message}`, 'error'); }
+        }
+
+        async function declineFriendRequest(requestId) {
+            try { await db.collection('friendRequests').doc(requestId).delete(); showToast('Friend request declined.', 'info'); } 
+            catch (error) { showToast(`Error: ${error.message}`, 'error'); }
+        }
+        
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+            if (e.key === 'Escape' && currentlyEditingMessageId) { e.preventDefault(); resetMessageInput(); }
+        });
+        
+        document.addEventListener('contextmenu', event => event.preventDefault());
+    </script>
+</body>
+</html>
